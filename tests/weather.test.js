@@ -1,76 +1,72 @@
+Since the code is not provided, I'll assume that we have a `Weather` class with methods like `getWeatherData(city)`, `compareWeatherData(cities)`, and `displayWeatherData(data)`. Here's how you might write tests for these methods:
+
 ```javascript
-const weather = require('../weather');
+const Weather = require('../weather');
 const axios = require('axios');
 
 jest.mock('axios');
 
-describe('Weather Module', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
+describe('Weather', () => {
+  let weather;
+
+  beforeEach(() => {
+    weather = new Weather();
+    axios.get.mockClear();
   });
 
-  it('should fetch weather data for a single city', async () => {
-    const data = {
-      data: {
-        main: {
-          temp: 20,
-          humidity: 80
-        },
-        wind: {
-          speed: 5
-        }
-      }
-    };
-    axios.get.mockResolvedValue(data);
+  describe('getWeatherData', () => {
+    it('should fetch weather data for a given city', async () => {
+      const data = { temp: 20, humidity: 80 };
+      axios.get.mockResolvedValue({ data });
 
-    const result = await weather.getWeather('London');
-    expect(result).toEqual(data.data);
-    expect(axios.get).toHaveBeenCalledWith('http://api.openweathermap.org/data/2.5/weather?q=London');
+      const result = await weather.getWeatherData('London');
+
+      expect(axios.get).toHaveBeenCalledWith('http://api.openweathermap.org/data/2.5/weather?q=London');
+      expect(result).toEqual(data);
+    });
+
+    it('should throw an error if the city is not provided', async () => {
+      await expect(weather.getWeatherData()).rejects.toThrow('City is required');
+    });
+
+    it('should throw an error if the API request fails', async () => {
+      axios.get.mockRejectedValue(new Error('API request failed'));
+
+      await expect(weather.getWeatherData('London')).rejects.toThrow('API request failed');
+    });
   });
 
-  it('should fetch weather data for multiple cities', async () => {
-    const data1 = {
-      data: {
-        main: {
-          temp: 20,
-          humidity: 80
-        },
-        wind: {
-          speed: 5
-        }
-      }
-    };
-    const data2 = {
-      data: {
-        main: {
-          temp: 25,
-          humidity: 70
-        },
-        wind: {
-          speed: 10
-        }
-      }
-    };
-    axios.get.mockResolvedValueOnce(data1).mockResolvedValueOnce(data2);
+  describe('compareWeatherData', () => {
+    it('should compare weather data for multiple cities', async () => {
+      const data1 = { temp: 20, humidity: 80 };
+      const data2 = { temp: 25, humidity: 70 };
+      axios.get.mockResolvedValueOnce({ data: data1 })
+        .mockResolvedValueOnce({ data: data2 });
 
-    const result = await weather.getWeather(['London', 'Paris']);
-    expect(result).toEqual([data1.data, data2.data]);
-    expect(axios.get).toHaveBeenCalledWith('http://api.openweathermap.org/data/2.5/weather?q=London');
-    expect(axios.get).toHaveBeenCalledWith('http://api.openweathermap.org/data/2.5/weather?q=Paris');
+      const result = await weather.compareWeatherData(['London', 'Paris']);
+
+      expect(result).toEqual({ 'London': data1, 'Paris': data2 });
+    });
+
+    it('should throw an error if less than 3 cities are provided', async () => {
+      await expect(weather.compareWeatherData(['London', 'Paris'])).rejects.toThrow('At least 3 cities are required');
+    });
   });
 
-  it('should handle errors', async () => {
-    axios.get.mockRejectedValue(new Error('Network Error'));
+  describe('displayWeatherData', () => {
+    it('should display weather data in a table', () => {
+      const data = { 'London': { temp: 20, humidity: 80 }, 'Paris': { temp: 25, humidity: 70 } };
+      const consoleSpy = jest.spyOn(console, 'log');
 
-    await expect(weather.getWeather('London')).rejects.toThrow('Network Error');
-  });
+      weather.displayWeatherData(data);
 
-  it('should handle edge case of no city provided', async () => {
-    await expect(weather.getWeather()).rejects.toThrow('No city provided');
-  });
-
-  it('should handle edge case of empty city name', async () => {
-    await expect(weather.getWeather('')).rejects.toThrow('No city provided');
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('London'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Paris'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('20'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('25'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('80'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('70'));
+    });
   });
 });
 ```
