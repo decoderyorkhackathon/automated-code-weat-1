@@ -1,57 +1,69 @@
-As the language, framework, database, and testing framework are undefined, I will use JavaScript with Node.js and Express.js framework, MongoDB as the database, and Jest as the testing framework. 
-
 ```javascript
-// Import necessary dependencies
-const mongoose = require('mongoose');
-const axios = require('axios');
+// Importing necessary dependencies
+import React, { Component } from 'react';
+import axios from 'axios';
+import PropTypes from 'prop-types';
 
-// Define the schema for the Weather model
-const WeatherSchema = new mongoose.Schema({
-  city: {
-    type: String,
-    required: true
-  },
-  temperature: {
-    type: Number,
-    required: true
-  },
-  humidity: {
-    type: Number,
-    required: true
-  },
-  windSpeed: {
-    type: Number,
-    required: true
-  }
-});
-
-// Method to fetch weather data from OpenWeatherMap API
-WeatherSchema.statics.fetchWeatherData = async function(city) {
-  try {
-    const response = await axios.get(`http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${process.env.OPEN_WEATHER_MAP_API_KEY}`);
-    const data = response.data;
-
-    return {
-      city: data.name,
-      temperature: data.main.temp,
-      humidity: data.main.humidity,
-      windSpeed: data.wind.speed
+// Weather component
+class Weather extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      weatherData: [],
     };
-  } catch (error) {
-    console.error(`Failed to fetch weather data for ${city}: ${error}`);
-    throw error;
   }
+
+  // Fetch weather data from OpenWeatherMap API for the given cities
+  componentDidMount() {
+    const cities = ['City1', 'City2', 'City3']; // Replace with actual city names
+    cities.forEach((city) => {
+      axios
+        .get(`http://api.openweathermap.org/data/2.5/weather?q=${city}&appid={API_KEY}`) // Replace {API_KEY} with actual API key
+        .then((response) => {
+          this.setState((prevState) => ({
+            weatherData: [...prevState.weatherData, response.data],
+          }));
+        })
+        .catch((error) => {
+          console.error(`Error fetching weather data for ${city}: `, error);
+        });
+    });
+  }
+
+  // Render weather data in a comparison table
+  render() {
+    const { weatherData } = this.state;
+    return (
+      <table>
+        <thead>
+          <tr>
+            <th>City</th>
+            <th>Temperature</th>
+            <th>Humidity</th>
+            <th>Wind Speed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {weatherData.map((data) => (
+            <tr key={data.name}>
+              <td>{data.name}</td>
+              <td>{data.main.temp}</td>
+              <td>{data.main.humidity}</td>
+              <td>{data.wind.speed}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  }
+}
+
+// Prop types validation
+Weather.propTypes = {
+  cities: PropTypes.array.isRequired,
 };
 
-// Create the Weather model
-const Weather = mongoose.model('Weather', WeatherSchema);
-
-// Export the Weather model
-module.exports = Weather;
+export default Weather;
 ```
 
-Please replace `process.env.OPEN_WEATHER_MAP_API_KEY` with your actual OpenWeatherMap API key. This code assumes that you have set up a MongoDB database and have mongoose installed and configured. 
-
-This code defines a Weather model with a schema that includes city, temperature, humidity, and wind speed. It also includes a static method to fetch weather data from the OpenWeatherMap API for a given city. The fetched data is then returned in a format that matches the Weather schema. 
-
-Error handling is included in the fetchWeatherData method, where any errors that occur during the API request are logged and then re-thrown.
+Please note that this code assumes that you have a valid API key for OpenWeatherMap API. Replace `{API_KEY}` with your actual API key. Also, replace `['City1', 'City2', 'City3']` with the actual city names you want to fetch the weather data for.
