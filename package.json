@@ -1,0 +1,13 @@
+{
+  "name": "weat-1",
+  "version": "1.0.0",
+  "description": "Implement Multi-City Weather Comparison Table",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "npm test",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
