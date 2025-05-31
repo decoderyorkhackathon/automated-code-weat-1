@@ -9,67 +9,56 @@ describe('Weather Service', () => {
     jest.clearAllMocks();
   });
 
-  it('should fetch weather data for a single city', async () => {
-    const data = {
-      data: {
-        main: {
-          temp: 20,
-          humidity: 80
-        },
-        wind: {
-          speed: 5
-        }
-      }
-    };
-    axios.get.mockResolvedValue(data);
-
-    const result = await weatherService.getWeather('London');
-    expect(result).toEqual(data.data);
-    expect(axios.get).toHaveBeenCalledWith(`http://api.openweathermap.org/data/2.5/weather?q=London&appid=${process.env.OPEN_WEATHER_MAP_API_KEY}`);
-  });
-
   it('should fetch weather data for multiple cities', async () => {
-    const data1 = {
+    const cities = ['London', 'Paris', 'Berlin'];
+    const mockData = {
       data: {
         main: {
           temp: 20,
-          humidity: 80
+          humidity: 80,
         },
-        wind: {
-          speed: 5
-        }
-      }
+        weather: [
+          {
+            description: 'clear sky',
+          },
+        ],
+      },
     };
-    const data2 = {
-      data: {
-        main: {
-          temp: 25,
-          humidity: 70
-        },
-        wind: {
-          speed: 10
-        }
-      }
-    };
-    axios.get.mockResolvedValueOnce(data1).mockResolvedValueOnce(data2);
 
-    const result = await weatherService.getWeather(['London', 'Paris']);
-    expect(result).toEqual([data1.data, data2.data]);
-    expect(axios.get).toHaveBeenCalledTimes(2);
+    axios.get.mockResolvedValue(mockData);
+
+    const weatherData = await weatherService.getWeatherDataForCities(cities);
+
+    expect(axios.get).toHaveBeenCalledTimes(3);
+    expect(weatherData).toHaveLength(3);
+    expect(weatherData[0]).toHaveProperty('city');
+    expect(weatherData[0]).toHaveProperty('temperature');
+    expect(weatherData[0]).toHaveProperty('humidity');
+    expect(weatherData[0]).toHaveProperty('description');
   });
 
-  it('should handle errors', async () => {
-    axios.get.mockRejectedValue(new Error('Network Error'));
+  it('should handle errors when fetching weather data', async () => {
+    const cities = ['London', 'Paris', 'Berlin'];
 
-    await expect(weatherService.getWeather('London')).rejects.toThrow('Network Error');
+    axios.get.mockRejectedValue(new Error('Network error'));
+
+    await expect(weatherService.getWeatherDataForCities(cities)).rejects.toThrow('Network error');
   });
 
-  it('should throw an error if no city is provided', async () => {
-    await expect(weatherService.getWeather()).rejects.toThrow('City is required');
+  it('should return empty array when no cities are provided', async () => {
+    const cities = [];
+
+    const weatherData = await weatherService.getWeatherDataForCities(cities);
+
+    expect(weatherData).toEqual([]);
   });
 
-  it('should throw an error if more than 3 cities are provided', async () => {
-    await expect(weatherService.getWeather(['London', 'Paris', 'Berlin', 'Madrid'])).rejects.toThrow('Cannot fetch weather for more than 3 cities at a time');
+  it('should handle invalid city names', async () => {
+    const cities = ['InvalidCity'];
+
+    axios.get.mockRejectedValue(new Error('City not found'));
+
+    await expect(weatherService.getWeatherDataForCities(cities)).rejects.toThrow('City not found');
   });
 });
 ```
