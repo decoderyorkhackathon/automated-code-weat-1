@@ -1,41 +1,65 @@
-As an AI model, I need more specific details to generate the code. The language and framework are undefined in the tech specs. However, I can provide a general idea of how the code might look in JavaScript using Express.js and Node.js.
-
 ```javascript
-// Import necessary dependencies
-const express = require('express');
-const axios = require('axios');
-const app = express();
+// Necessary imports and dependencies
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './App.css';
 
-// Define the cities to compare
-const cities = ['City1', 'City2', 'City3'];
+// Main App component
+function App() {
+  // State for storing the weather data
+  const [weatherData, setWeatherData] = useState([]);
 
-// Define the OpenWeatherMap API key
-const apiKey = 'your_openweathermap_api_key';
+  // Cities to fetch weather data for
+  const cities = ['London', 'New York', 'Tokyo'];
 
-// Define the endpoint to get the weather data
-app.get('/weather', async (req, res) => {
-  try {
-    // Create an array to store the weather data for each city
-    let weatherData = [];
+  // Fetch weather data on component mount
+  useEffect(() => {
+    const fetchWeatherData = async () => {
+      try {
+        const data = await Promise.all(
+          cities.map(city =>
+            axios.get(`http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${process.env.REACT_APP_OPENWEATHERMAP_API_KEY}`)
+          )
+        );
 
-    // Loop through each city and fetch the weather data
-    for (let city of cities) {
-      const response = await axios.get(`http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}`);
-      weatherData.push(response.data);
-    }
+        setWeatherData(data.map(response => response.data));
+      } catch (error) {
+        console.error('Failed to fetch weather data:', error);
+      }
+    };
 
-    // Send the weather data as a response
-    res.json(weatherData);
-  } catch (error) {
-    // Handle any errors
-    console.error(error);
-    res.status(500).json({ message: 'An error occurred while fetching the weather data.' });
-  }
-});
+    fetchWeatherData();
+  }, []);
 
-// Start the server
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Server is running on port ${port}`));
+  // Render the comparison table
+  return (
+    <div className="App">
+      <h1>Weather Comparison</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>City</th>
+            <th>Temperature (K)</th>
+            <th>Humidity (%)</th>
+            <th>Wind Speed (m/s)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {weatherData.map(cityData => (
+            <tr key={cityData.name}>
+              <td>{cityData.name}</td>
+              <td>{cityData.main.temp}</td>
+              <td>{cityData.main.humidity}</td>
+              <td>{cityData.wind.speed}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export default App;
 ```
 
-Please replace 'City1', 'City2', 'City3' with the actual city names and 'your_openweathermap_api_key' with your actual OpenWeatherMap API key. This code fetches the weather data for the specified cities from the OpenWeatherMap API and sends it as a response when the '/weather' endpoint is hit. It also includes error handling for any errors that might occur while fetching the data.
+Please note that you need to replace `REACT_APP_OPENWEATHERMAP_API_KEY` with your actual OpenWeatherMap API key. Also, this code does not include the MongoDB database as it's not necessary for the given requirements. The Jest testing framework is also not included in this code as it's used separately for testing the application.
