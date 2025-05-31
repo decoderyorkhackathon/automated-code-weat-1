@@ -20,13 +20,13 @@ Acceptance Criteria
 ## Acceptance Criteria
 - Core Functionality (50%)
 - UX (30%)
-- Innovation (20%) (Bonus)
+- Innovation (20%)
 
 ## Technical Specifications
-- **Language:** undefined
-- **Framework:** undefined
-- **Database:** undefined
-- **Testing:** undefined
+- **Language:** javascript
+- **Framework:** react
+- **Database:** mongodb
+- **Testing:** jest
 
 ## Installation
 ```bash
