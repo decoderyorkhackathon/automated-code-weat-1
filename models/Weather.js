@@ -1,31 +1,57 @@
-As the language and framework are undefined, I'll provide a JavaScript example using Node.js and Express.js, with the Axios library to make HTTP requests to the OpenWeatherMap API.
+As the language, framework, database, and testing framework are undefined, I will use JavaScript with Node.js and Express.js framework, MongoDB as the database, and Jest as the testing framework. 
 
 ```javascript
 // Import necessary dependencies
+const mongoose = require('mongoose');
 const axios = require('axios');
 
-// Define the Weather model
-class Weather {
-  constructor(city) {
-    this.city = city;
+// Define the schema for the Weather model
+const WeatherSchema = new mongoose.Schema({
+  city: {
+    type: String,
+    required: true
+  },
+  temperature: {
+    type: Number,
+    required: true
+  },
+  humidity: {
+    type: Number,
+    required: true
+  },
+  windSpeed: {
+    type: Number,
+    required: true
   }
+});
 
-  // Method to get weather data from OpenWeatherMap API
-  async getWeatherData() {
-    try {
-      const response = await axios.get(`http://api.openweathermap.org/data/2.5/weather?q=${this.city}&appid=YOUR_API_KEY`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error: ${error}`);
-    }
+// Method to fetch weather data from OpenWeatherMap API
+WeatherSchema.statics.fetchWeatherData = async function(city) {
+  try {
+    const response = await axios.get(`http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${process.env.OPEN_WEATHER_MAP_API_KEY}`);
+    const data = response.data;
+
+    return {
+      city: data.name,
+      temperature: data.main.temp,
+      humidity: data.main.humidity,
+      windSpeed: data.wind.speed
+    };
+  } catch (error) {
+    console.error(`Failed to fetch weather data for ${city}: ${error}`);
+    throw error;
   }
-}
+};
 
+// Create the Weather model
+const Weather = mongoose.model('Weather', WeatherSchema);
+
+// Export the Weather model
 module.exports = Weather;
 ```
 
-This code defines a `Weather` class with a constructor that takes a city name as an argument. It includes a `getWeatherData` method that makes a GET request to the OpenWeatherMap API for the specified city. The method returns the response data if the request is successful, and logs an error message if the request fails.
+Please replace `process.env.OPEN_WEATHER_MAP_API_KEY` with your actual OpenWeatherMap API key. This code assumes that you have set up a MongoDB database and have mongoose installed and configured. 
 
-Please replace `YOUR_API_KEY` with your actual OpenWeatherMap API key.
+This code defines a Weather model with a schema that includes city, temperature, humidity, and wind speed. It also includes a static method to fetch weather data from the OpenWeatherMap API for a given city. The fetched data is then returned in a format that matches the Weather schema. 
 
-Note: This is a basic example and does not include a comparison table or a way to view weather metrics for multiple cities simultaneously. Those features would likely be implemented in the front-end of your application, not in the Weather model.
+Error handling is included in the fetchWeatherData method, where any errors that occur during the API request are logged and then re-thrown.
